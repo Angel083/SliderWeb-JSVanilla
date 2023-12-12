@@ -7,6 +7,7 @@ class Slider{
       infinite: options.hasOwnProperty('infinite') ? options.infinite : true,
       controls: options.hasOwnProperty('controls') ? options.controls : true,
       controlsPosition: options.controlsPosition || 'inside' // inside or outside
+      // controls: options.hasOwnProperty('controls') ? options.controls : true,
     },
     this.move = this.move.bind(this);
     this.contador =  0;
@@ -14,6 +15,9 @@ class Slider{
     this.start();
     
     if (this.options.controls) {
+      if (this.options.controlsPosition == "outside") {
+        this.slider.classList.add("outside")
+      }
       this.buildControls()
     }
   }
@@ -37,6 +41,7 @@ class Slider{
   buildControls(){
     for (let i = 0; i < this.itemsCount; i++) {
       var control = document.createElement("li");
+      control.classList.add("dot")
       if(i == 0) control.classList.add("active");
       this.slider.querySelector(".controls ul").appendChild(control);
     }
