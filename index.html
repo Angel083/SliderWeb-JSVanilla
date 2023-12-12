@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slider</title>
+  <link rel="stylesheet" href="./styles/styles.css">
+</head>
+<body style="width: 100%; height: 100vh;">
+  <div style="width: 600px; height: 250px;">
+    <div class="slider">
+      <div class="container">
+        <img src="./src/1.jpg" alt="">
+        <img src="./src/2.jpg" alt="">
+        <img src="./src/3.jpg" alt="">
+        <img src="./src/4.jpg" alt="">
+      </div>
+      <div class="controls">
+        <ul></ul>
+      </div>
+    </div>
+  </div>
+  <script src="./js/index.js"></script>
+  <script>
+    new Slider(".slider", {
+      // intervalMove: 1000,
+      // controls : true,
+      infinite: true,
+      // controlsPosition: 'outside'
+    })
+  </script>
+</body>
+</html>
