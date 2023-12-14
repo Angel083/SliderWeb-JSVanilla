@@ -1,17 +1,23 @@
 class Slider{
   constructor(selector, options = {}){
     this.slider = document.querySelector(selector);
+    this.container = this.slider.querySelector(".container");
     this.options = {
       intervalMove: options.intervalMove || 2000,
       autoPlay: options.hasOwnProperty('autoPlay') ? options.autoPlay : true,
       infinite: options.hasOwnProperty('infinite') ? options.infinite : true,
       controls: options.hasOwnProperty('controls') ? options.controls : true,
+      animationTime: options.animationTime || '0.3s', // inside or outside
+      animationType: options.animationType || 'ease-in-out', // inside or outside
       controlsPosition: options.controlsPosition || 'inside' // inside or outside
     },
+    this.animation = `transform ${this.options.animationTime} ${this.options.animationType}`
     this.move = this.move.bind(this);
-    this.interval = null,
+    this.interval = null;
+    this.isInTransition = false
 
-    this.contador =  0;
+    this.counter =  0;
+    this.counterCurrent =  0;
     this.sliderElementsCount = this.slider.querySelectorAll(".container > .slide__element").length;
     if (this.options.controls) {
       if (this.options.controlsPosition == "outside") {
@@ -24,22 +30,27 @@ class Slider{
     
   }
   start(){
-    // if (!this.options.infinite && this.contador == 0)
+    if (this.options.infinite) {
+      this.counter = 1
+      this.moveTo(1)
+      this.container.prepend(this.container.lastElementChild)
+    }
+    // if (!this.options.infinite && this.counter == 0)
     //   this.slider.querySelector(".arrow_left").classList.add("disable")
     if (!this.options.autoPlay) return
     this.interval = window.setInterval(this.move, this.options.intervalMove);
   }
   move(){
-    this.contador++;
+    this.counter++;
     if (!this.options.infinite) {
-      if (this.contador > this.sliderElementsCount - 1) return
+      if (this.counter > this.sliderElementsCount - 1) return
     }
-    if (this.contador > this.sliderElementsCount - 1) this.contador = 0
-    this.moveTo(this.contador);
+    if (this.counter > this.sliderElementsCount - 1) this.counter = 0
+    this.moveTo(this.counter);
   }
   moveTo(index){
-    let left = index * 100;
-    this.slider.querySelector(".container").style.left = "-" + left + "%";
+    let translateX = index * 100;
+    this.slider.querySelector(".container").style.transform = "translateX(-"+ translateX + "%)";
     this.resetIndicator();
     this.slider.querySelector(".controls li:nth-child("+ (index + 1) + ")").classList.add("active")
   }
@@ -81,37 +92,31 @@ class Slider{
 
   bindEvents(){
     this.slider.addEventListener('click', (e) => {
+      console.log(this.isInTransition)
+      if (this.isInTransition) return
       if (e.target.matches(".dot")) {
         let index = this.getIndex(e.target)
-        this.contador = index 
+        this.counter = index 
         this.restartInterval();
         this.moveTo(index);
+        // this.reorderSlides();
       }
-      if (e.target.matches(".arrow_left")) {
-        // if (!this.options.infinite && this.contador == 0) {
-        //   e.target.classList.add("disable")
-        //   console.log("loc")
-        //   return
-        // }
-        this.contador--;
-        this.restartInterval();
-        this.moveTo(this.contador);
+      else if (e.target.closest(".arrow_left")) {
+        this.counter--;
       }
-      if (e.target.matches(".arrow_right")) {
-        console.log("click")
-        console.log(this.contador)
-        console.log(this.sliderElementsCount- 1)
-        // console.log(this.sliderElementsCount)
-        if (this.contador == (this.sliderElementsCount - 1)) {
-          
-          console.log("moviendo primer child")
-          return
-        }
-        this.contador++;
-        this.restartInterval();
-        console.log("moviendo")
-        this.moveTo(this.contador);
+      else if (e.target.closest(".arrow_right")) {
+        this.counter++;
       }
+      this.isInTransition = true
+      this.moveTo(this.counter);
+      this.container.style.transition = `${this.animation}`
+    });
+
+    this.container.addEventListener('transitionend', () => {
+      if (this.options.infinite) {
+        this.reorderSlides();
+      }
+      this.isInTransition = false
     })
   }
   getIndex(dot){
@@ -125,6 +130,22 @@ class Slider{
        window.clearInterval(this.interval);
        this.start();
     }
+  }
+  reorderSlides() {
+    this.isInTransition = true
+    this.container.style.transition = "none"
+    if (this.counter === this.sliderElementsCount - 1) {
+      this.counter--;
+      console.log();
+      this.container.appendChild(this.container.firstElementChild)
+      // console.log(this.slider.querySelector(".container").firstElementChild)
+    }
+    else if (this.counter === 0){
+      // this.container.style.transition = "none"
+      this.counter++;
+      this.container.prepend(this.container.lastElementChild)
+    }
+    this.moveTo(this.counter);
   }
 }
 
