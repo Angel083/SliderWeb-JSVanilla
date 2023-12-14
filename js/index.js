@@ -7,11 +7,11 @@ class Slider{
       autoPlay: options.hasOwnProperty('autoPlay') ? options.autoPlay : true,
       infinite: options.hasOwnProperty('infinite') ? options.infinite : true,
       controls: options.hasOwnProperty('controls') ? options.controls : true,
-      animationTime: options.animationTime || '0.3s', // inside or outside
+      animationTime: options.animationTime || 300, // inside or outside
       animationType: options.animationType || 'ease-in-out', // inside or outside
       controlsPosition: options.controlsPosition || 'inside' // inside or outside
     },
-    this.animation = `transform ${this.options.animationTime} ${this.options.animationType}`
+    this.animation = `transform ${this.options.animationTime}ms ${this.options.animationType}`
     this.move = this.move.bind(this);
     this.interval = null;
     this.isInTransition = false
@@ -19,6 +19,10 @@ class Slider{
     this.counter =  0;
     this.counterCurrent =  0;
     this.sliderElementsCount = this.slider.querySelectorAll(".container > .slide__element").length;
+
+    // Alertar por errores
+    this.alerts()
+
     if (this.options.controls) {
       if (this.options.controlsPosition == "outside") {
         this.slider.classList.add("outside")
@@ -26,27 +30,36 @@ class Slider{
       this.buildControls()
     }
     this.start();
+    this.startFirstTime = true;
     this.bindEvents();
     
   }
   start(){
     if (this.options.infinite) {
       this.counter = 1
-      this.moveTo(1)
+      this.moveTo(1);
       this.container.prepend(this.container.lastElementChild)
     }
-    // if (!this.options.infinite && this.counter == 0)
-    //   this.slider.querySelector(".arrow_left").classList.add("disable")
+    this.setInterval()
+  }
+  setInterval() {
     if (!this.options.autoPlay) return
     this.interval = window.setInterval(this.move, this.options.intervalMove);
   }
   move(){
-    this.counter++;
-    if (!this.options.infinite) {
-      if (this.counter > this.sliderElementsCount - 1) return
+    if (!this.isInTransition) {
+      this.isInTransition = true
+      this.counter++;
+      if (!this.options.infinite) {
+        if (this.counter > this.sliderElementsCount - 1) return
+      }
+      // if (this.counter > this.sliderElementsCount - 1) this.counter = 0
+      this.isInTransition = true
+      this.moveTo(this.counter);
+      this.container.style.transition = `${this.animation}`
     }
-    if (this.counter > this.sliderElementsCount - 1) this.counter = 0
-    this.moveTo(this.counter);
+    // console.log(this.isInTransition)
+    
   }
   moveTo(index){
     let translateX = index * 100;
@@ -94,27 +107,35 @@ class Slider{
     this.slider.addEventListener('click', (e) => {
       console.log(this.isInTransition)
       if (this.isInTransition) return
-      if (e.target.matches(".dot")) {
+      else if(e.target.matches(".dot")) {
         let index = this.getIndex(e.target)
-        this.counter = index 
+        this.counter = index
+        console.log(index)
         this.restartInterval();
         this.moveTo(index);
-        // this.reorderSlides();
       }
       else if (e.target.closest(".arrow_left")) {
+        this.restartInterval();
         this.counter--;
+        this.moveTo(this.counter);
       }
       else if (e.target.closest(".arrow_right")) {
+        this.restartInterval();
         this.counter++;
+        this.moveTo(this.counter);
       }
-      this.isInTransition = true
-      this.moveTo(this.counter);
       this.container.style.transition = `${this.animation}`
+      
     });
 
+    this.container.addEventListener('transitionstart', () => {
+      this.isInTransition = true
+    })
     this.container.addEventListener('transitionend', () => {
       if (this.options.infinite) {
-        this.reorderSlides();
+        if (this.counter === this.sliderElementsCount - 1 || this.counter === 0) {
+          this.reorderSlides();
+        }
       }
       this.isInTransition = false
     })
@@ -127,8 +148,8 @@ class Slider{
   }
   restartInterval(){
     if (this.interval) {
-       window.clearInterval(this.interval);
-       this.start();
+        window.clearInterval(this.interval);
+        this.setInterval();
     }
   }
   reorderSlides() {
@@ -138,14 +159,17 @@ class Slider{
       this.counter--;
       console.log();
       this.container.appendChild(this.container.firstElementChild)
-      // console.log(this.slider.querySelector(".container").firstElementChild)
     }
     else if (this.counter === 0){
-      // this.container.style.transition = "none"
       this.counter++;
       this.container.prepend(this.container.lastElementChild)
     }
     this.moveTo(this.counter);
+  }
+  alerts(){
+    if (this.options.animationTime >= this.options.intervalMove) {
+      return alert("The propiety animationTime is greater than intervalMove. This not possible.")
+    }
   }
 }
 
