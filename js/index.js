@@ -2,7 +2,7 @@ class Slider{
   constructor(selector, options = {}){
     this.slider = document.querySelector(selector);
     this.container = this.slider.querySelector(".container");
-    this.options = {
+    this.options = { 
       intervalMove: options.intervalMove || 2000,
       autoPlay: options.hasOwnProperty('autoPlay') ? options.autoPlay : true,
       infinite: options.hasOwnProperty('infinite') ? options.infinite : true,
@@ -29,16 +29,23 @@ class Slider{
       }
       this.buildControls()
     }
+    this.setIDReferences()
     this.start();
     this.startFirstTime = true;
     this.bindEvents();
     
   }
+  setIDReferences(){
+    Array.from(this.slider.querySelectorAll(".container > .slide__element"))
+      .forEach((element, i) =>{
+        element.setAttribute('data-slider-position', i +1);
+      })
+  }
   start(){
     if (this.options.infinite) {
-      this.counter = 1
-      this.moveTo(1);
       this.container.prepend(this.container.lastElementChild)
+      this.counter = 1
+      this.moveTo(this.counter);
     }
     this.setInterval()
   }
@@ -61,11 +68,18 @@ class Slider{
     // console.log(this.isInTransition)
     
   }
-  moveTo(index){
+  moveTo(index,behavior){
     let translateX = index * 100;
     this.slider.querySelector(".container").style.transform = "translateX(-"+ translateX + "%)";
+    this.handleChangeDot(index, behavior)
+  }
+  handleChangeDot(index, behavior){
     this.resetIndicator();
-    this.slider.querySelector(".controls li:nth-child("+ (index + 1) + ")").classList.add("active")
+    if (behavior == "clickDot") {
+      
+    }
+    let positionActive = Number(this.container.children[index].getAttribute("data-slider-position"))
+    this.slider.querySelector(".controls li:nth-child("+ (positionActive) + ")").classList.add("active")
   }
   buildControls(){
     var listDots = document.createElement("ul");
@@ -108,21 +122,26 @@ class Slider{
       console.log(this.isInTransition)
       if (this.isInTransition) return
       else if(e.target.matches(".dot")) {
-        let index = this.getIndex(e.target)
+        let index = this.getIndex(e.target) + 1
         this.counter = index
-        console.log(index)
+        if (index == this.sliderElementsCount) {
+          let index = this.getIndex(e.target)
+          this.counter = index
+        }
+        // console.log("index")
+        // console.log(index)
         this.restartInterval();
-        this.moveTo(index);
+        this.moveTo(index,"clickDot");
       }
       else if (e.target.closest(".arrow_left")) {
         this.restartInterval();
         this.counter--;
-        this.moveTo(this.counter);
+        this.moveTo(this.counter, "");
       }
       else if (e.target.closest(".arrow_right")) {
         this.restartInterval();
         this.counter++;
-        this.moveTo(this.counter);
+        this.moveTo(this.counter,"");
       }
       this.container.style.transition = `${this.animation}`
       
