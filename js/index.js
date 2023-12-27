@@ -43,11 +43,11 @@ class Slider{
   }
   start(){
     if (this.options.infinite) {
-      this.container.prepend(this.container.lastElementChild)
-      this.counter = 1
+      this.container.prepend(this.container.lastElementChild);
+      this.counter = 1;
       this.moveTo(this.counter);
     }
-    this.setInterval()
+    this.setInterval();
   }
   setInterval() {
     if (!this.options.autoPlay) return
@@ -60,26 +60,22 @@ class Slider{
       if (!this.options.infinite) {
         if (this.counter > this.sliderElementsCount - 1) return
       }
-      // if (this.counter > this.sliderElementsCount - 1) this.counter = 0
-      this.isInTransition = true
       this.moveTo(this.counter);
       this.container.style.transition = `${this.animation}`
     }
-    // console.log(this.isInTransition)
     
   }
-  moveTo(index,behavior){
+  moveTo(index){
     let translateX = index * 100;
-    this.slider.querySelector(".container").style.transform = "translateX(-"+ translateX + "%)";
-    this.handleChangeDot(index, behavior)
+    this.container.style.transform = "translateX(-"+ translateX + "%)";
+    let positionToActive = Number(this.container.children[index].getAttribute("data-slider-position"))
+    this.handleChangeDot(positionToActive)
+    this.isInTransition = false
   }
-  handleChangeDot(index, behavior){
+
+  handleChangeDot(positionToActive){
     this.resetIndicator();
-    if (behavior == "clickDot") {
-      
-    }
-    let positionActive = Number(this.container.children[index].getAttribute("data-slider-position"))
-    this.slider.querySelector(".controls li:nth-child("+ (positionActive) + ")").classList.add("active")
+    this.slider.querySelector(".controls li:nth-child("+ (positionToActive) + ")").classList.add("active")
   }
   buildControls(){
     var listDots = document.createElement("ul");
@@ -119,31 +115,33 @@ class Slider{
 
   bindEvents(){
     this.slider.addEventListener('click', (e) => {
-      console.log(this.isInTransition)
       if (this.isInTransition) return
       else if(e.target.matches(".dot")) {
-        let index = this.getIndex(e.target) + 1
-        this.counter = index
-        if (index == this.sliderElementsCount) {
-          let index = this.getIndex(e.target)
-          this.counter = index
+        let index = this.getIndex(e.target);
+        let currentPosition= this.getIndex(e.target);
+        currentPosition++
+        if (this.container.children[this.counter].getAttribute("data-slider-position") == currentPosition) {
+          return
         }
-        // console.log("index")
-        // console.log(index)
-        this.restartInterval();
-        this.moveTo(index,"clickDot");
+        this.reorderSliderAscent(index)
+        setTimeout(() => {
+          this.moveTo(this.counter);
+          this.container.style.transition = `${this.animation}`
+        }, 1);
       }
       else if (e.target.closest(".arrow_left")) {
         this.restartInterval();
         this.counter--;
-        this.moveTo(this.counter, "");
+        this.container.style.transition = `${this.animation}`
+        this.moveTo(this.counter);
       }
       else if (e.target.closest(".arrow_right")) {
+        console.log(e.target)
         this.restartInterval();
         this.counter++;
-        this.moveTo(this.counter,"");
+        this.container.style.transition = `${this.animation}`
+        this.moveTo(this.counter);
       }
-      this.container.style.transition = `${this.animation}`
       
     });
 
@@ -154,6 +152,7 @@ class Slider{
       if (this.options.infinite) {
         if (this.counter === this.sliderElementsCount - 1 || this.counter === 0) {
           this.reorderSlides();
+          this.moveTo(this.counter);
         }
       }
       this.isInTransition = false
@@ -172,23 +171,38 @@ class Slider{
     }
   }
   reorderSlides() {
-    this.isInTransition = true
-    this.container.style.transition = "none"
     if (this.counter === this.sliderElementsCount - 1) {
       this.counter--;
-      console.log();
       this.container.appendChild(this.container.firstElementChild)
     }
     else if (this.counter === 0){
       this.counter++;
       this.container.prepend(this.container.lastElementChild)
     }
-    this.moveTo(this.counter);
+    this.container.style.transition = "none"
+    
   }
   alerts(){
     if (this.options.animationTime >= this.options.intervalMove) {
       return alert("The propiety animationTime is greater than intervalMove. This not possible.")
     }
+  }
+  reorderSliderAscent(positionDot){
+    let contadorAux = 1
+    this.container.querySelectorAll(".slide__element").forEach((element, position) => {
+      var sliderChildPosition = element.getAttribute("data-slider-position")
+      if (contadorAux != sliderChildPosition) {
+        this.container.appendChild(element)
+        this.counter--
+        if (this.counter < 0) {
+          this.counter = this.sliderElementsCount -1
+        }
+        this.moveTo(this.counter)
+        return
+      }
+      contadorAux++;
+    });
+    this.counter = positionDot    
   }
 }
 
